@@ -1,0 +1,2 @@
+# Mypystudy
+iam new
