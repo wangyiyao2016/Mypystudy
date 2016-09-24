@@ -1,0 +1,69 @@
+#!/usr/bin/env python
+#coding=utf-8
+
+
+'''
+习题：
+
+定义一个列表的操作类，名字为：ListInfo
+
+包括的方法:
+
+1 列表元素添加: add_key(keyname)  [keyname:字符串或者整数类型]
+2 列表元素取值：get_key(num) [num:整数类型]
+3 列表合并：update_list(l)      [l:列表类型]
+4 删除并且返回最后一个元素：del_key()
+
+list_info = ListInfo([44,222,111,333,454,'iplaypython','ABC'])
+'''
+
+
+__metaclass__= type
+
+class ListInfo:
+  
+    def __init__(self, l):
+        print 'activate Listinfo'
+        if isinstance(l, list):
+            self.l = l
+        else:
+            return '一个列表的操作类'
+    def add_key(self, keyname):#[keyname:字符串或者整数类型]
+        if isinstance(keyname, str or int):
+            self.l.append(keyname)
+            self.l.sort()
+            return self.l
+        else:
+            return '字符串或者整数类型'
+      
+    def get_key(self, num):
+        if isinstance(num, int):
+            return self.l[num]
+      
+        else:
+            return 'num must be integer'
+          
+  
+    def update_list(self, l):
+        if isinstance(l, list):
+            return self.l + l
+        else:
+            return 'l should be list'
+    def del_key(self):
+        return self.l.pop()
+      
+    def __del__(self):
+        print 'Good Bye Listinfo '
+      
+
+  
+list_info = ListInfo([44,222,111,333,454,'iplaypython','ABC'])
+
+
+
+#h = [12,'ghg',{1:'a'}]
+#print list_info.del_key()
+#print list_info.add_key('test')
+#print list_info.get_key(3)
+#print list_info.update_list(h)
+#
