@@ -1,5 +1,4 @@
-import threading  
-from twisted.persisted.aot import Instance
+import threading
   
 class Singleton(object):  
     """ 
