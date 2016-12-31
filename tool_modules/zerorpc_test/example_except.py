@@ -8,6 +8,7 @@ import zerorpc
 
 class ExceptionalRPC(object):
     def bad(self):
+        print("bad method called")
         raise Exception(":P")
 
 
