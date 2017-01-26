@@ -9,9 +9,9 @@ import time
 
 
 def thread_job():
-    print "thread_job start"
+    print("thread_job start")
     time.sleep(8)
-    print "thread_job done"
+    print("thread_job done")
 
 def main():
 #     print threading.active_count()
@@ -20,7 +20,6 @@ def main():
     addT = threading.Thread(target=thread_job, name="T1")
     addT.start()
     addT.join()
-    print "T1 DONE"
     
 if __name__ == '__main__':
     main()
