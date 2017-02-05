@@ -11,6 +11,9 @@ def g(x):
     yield from range(x, 0, -1)
     yield from range(x)
 
+g_obj = g(4)
+
+
 def tt():
     while True:
         y = yield
@@ -28,6 +31,7 @@ def ttt():
 # for i in r:
 #     print(i)
 
+
 def accumulate():
     tally = 0
     while True:
@@ -42,17 +46,33 @@ def gather_tallies(tallies):
         tally = yield from accumulate()
         print(tally)
         tallies.append(tally)
-        print(tallies)
 
+
+def ytest(x):
+    l = []
+    while True:
+        a = yield from range(x)
+        l.append(a)
+        yield l
 
 if __name__ == '__main__':
-#     a = ttt()
-#     for i in a:
-#         print(i)
+    #  ===========================================================================
+    # a = ttt()
+    # r = next(a)
+    # rs = a.send(1)
+    # r2 = next(a)
+    # for i in a:
+    #     print(i)
+    #  ===========================================================================
     tallies = []
     acc = gather_tallies(tallies)
     next(acc)
-    acc.send(5)
+#     acc.send(5)
     for i in range(4):
         acc.send(i)
+    acc.send(None)
+    for i in range(5):
+        acc.send(i)
+    acc.send(None)
+    print(tallies)
     pass
