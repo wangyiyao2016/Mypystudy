@@ -22,12 +22,12 @@ logger.addHandler(handler)
 
 
 def run(logger):
-    for i in xrange(10**2):
+    for i in range(10**2):
         logger.debug("i = %d" % i)
 
     log_files = glob.glob("%s*" % filename)
     for i in log_files:
-        print i
+        print(i)
 
 if __name__ == '__main__':
     run(logger)
