@@ -19,6 +19,7 @@ async def test(content, delay):
     print(content)
 
 loop = asyncio.get_event_loop()
+loop.set_debug(enabled=True)
 tasks = [
         asyncio.tasks.Task(test("one", 1.5)),
         asyncio.ensure_future(test("two", 2)),
@@ -26,6 +27,7 @@ tasks = [
         asyncio.ensure_future(test_old("four", 3.5)),
         ]
 if __name__ == '__main__':
-    loop.run_until_complete(asyncio.wait(tasks))
+    tasks = asyncio.wait(tasks)
+    loop.run_until_complete(tasks)
     loop.close()
     pass

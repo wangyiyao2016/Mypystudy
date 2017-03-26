@@ -4,11 +4,10 @@ Created on Nov 20, 2016
 @author: jack
 '''
 from queue import Queue
-from threading import Lock
 import threading
 import time
 
-p_lock = Lock()
+p_lock = threading.Lock()
 q = Queue()
 
 
