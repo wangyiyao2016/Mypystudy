@@ -39,7 +39,7 @@ class Producer(threading.Thread):
             self.condition.notify()  # 唤醒消费者线程
             print('condition released by %s' % self.name)
             self.condition.release()  # 释放条件锁
-            # time.sleep(1)  # 暂停1秒钟
+            time.sleep(5)  # 暂停1秒钟
 
 
 class Consumer(threading.Thread):
@@ -74,6 +74,15 @@ class Consumer(threading.Thread):
                 self.condition.wait()  # 等待商品，并且释放资源
             print('condition released by %s' % self.name)
             self.condition.release()  # 最后释放条件锁
+            # time.sleep(1)
+
+    def consume(self):
+        """
+        """
+        with self.condition:
+                self.condition.wait_for(self.integers)
+                integer = self.integers.pop()
+                print("integer:", integer)
 
 
 def main():
