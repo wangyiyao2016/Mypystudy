@@ -21,7 +21,7 @@ class Producer(threading.Thread):
         @param integers 整数列表
         @param condition 条件同步对象
         """
-        threading.Thread.__init__(self)
+        super().__init__()
         self.integers = integers
         self.condition = condition
 
@@ -54,7 +54,7 @@ class Consumer(threading.Thread):
         @param integers 整数列表
         @param condition 条件同步对象
         """
-        threading.Thread.__init__(self)
+        super().__init__()
         self.integers = integers
         self.condition = condition
 
@@ -62,27 +62,17 @@ class Consumer(threading.Thread):
         """
         实现Thread的run()方法，从列表中消费整数
         """
-        while True:
-            self.condition.acquire()  # 获取条件锁
+#         while True:
+        with self.condition:  # 获取条件锁
             print('condition acquired by %s' % self.name)
-            while True:
-                if self.integers:  # 判断是否有整数
-                    integer = self.integers.pop()
-                    print('%d popped from list by %s' % (integer, self.name))
-                    break
-                print('condition wait by %s' % self.name)
-                self.condition.wait()  # 等待商品，并且释放资源
-            print('condition released by %s' % self.name)
-            self.condition.release()  # 最后释放条件锁
-            # time.sleep(1)
-
-    def consume(self):
-        """
-        """
-        with self.condition:
-                self.condition.wait_for(self.integers)
+            while self.integers:
+                print("len: ", len(self.integers))
                 integer = self.integers.pop()
-                print("integer:", integer)
+                print('%d popped from list by %s' % (integer, self.name))
+            self.condition.wait()  # 等待商品，并且释放资源
+            print('condition wait by %s' % self.name)
+        print('condition released by %s' % self.name)
+        # time.sleep(1)
 
 
 def main():
@@ -97,9 +87,5 @@ def main():
 
 
 if __name__ == '__main__':
-    #===========================================================================
-    # p_lock = threading.Lock()
-    # cv = threading.Condition(p_lock)
-    #===========================================================================
     main()
     pass
