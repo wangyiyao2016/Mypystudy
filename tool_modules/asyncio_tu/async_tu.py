@@ -25,9 +25,14 @@ tasks = [
         asyncio.ensure_future(test("two", 2)),
         asyncio.ensure_future(test_old("three", 3)),
         asyncio.ensure_future(test_old("four", 3.5)),
+        loop.create_task(test("five", 3.5)),
         ]
 if __name__ == '__main__':
     tasks = asyncio.wait(tasks)
-    loop.run_until_complete(tasks)
-    loop.close()
-    pass
+    try:
+        result = loop.run_until_complete(tasks)
+        print(*result)
+    except:
+        print(*result)
+    finally:
+        loop.close()
