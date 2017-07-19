@@ -13,6 +13,6 @@ c.connect("tcp://127.0.0.1:4242")
 if __name__ == '__main__':
     try:
         c.bad()
-    except Exception, e:
-        print "An error occurred: %s" % e
+    except Exception as e:
+        print("An error occurred: %r" % e)
     pass

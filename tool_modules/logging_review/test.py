@@ -5,214 +5,120 @@ Created on May 16, 2017
 
 @author: jack
 '''
-from multiprocessing import Process, Queue, Event, current_process
-import logging.config
+# You'll need these imports in your own code
+from random import choice, random
 import logging.handlers
-import os
-import random
+import multiprocessing
 import time
 
 
-class MyHandler:
-    """
-    A simple handler for logging events. It runs in the listener process and
-    dispatches events to loggers based on the name in the received record,
-    which then get dispatched, by the logging system, to the handlers
-    configured for those loggers.
-    """
+# Next two import lines for this demo only
+#
+# Because you'll want to define the logging configurations for listener and workers, the
+# listener and worker process functions take a configurer parameter which is a callable
+# for configuring logging for that process. These functions are also passed the queue,
+# which they use for communication.
+#
+# In practice, you can configure the listener however you want, but note that in this
+# simple example, the listener does not apply level or filter logic to received records.
+# In practice, you would probably want to do this logic in the worker processes, to avoid
+# sending events which would be filtered out between processes.
+#
+# The size of the rotated files is made small so you can see the results
+# easily.
+def listener_configurer():
+    root = logging.getLogger()
+    h = logging.handlers.RotatingFileHandler('log/mptest.log', 'w', 300, 10)
+    f = logging.Formatter(
+        '%(asctime)s %(processName)-10s %(name)s %(levelname)-8s %(message)s')
+    h.setFormatter(f)
+    root.addHandler(h)
 
-    def handle(self, record):
-        logger = logging.getLogger(record.name)
-        # The process name is transformed just to show that it's the listener
-        # doing the logging to files and console
-        record.processName = '%s (for %s)' % (
-            current_process().name, record.processName)
-        logger.handle(record)
-
-
-def listener_process(q, stop_event, config):
-    """
-    This could be done in the main process, but is just done in a separate
-    process for illustrative purposes.
-
-    This initialises logging according to the specified configuration,
-    starts the listener and waits for the main process to signal completion
-    via the event. The listener is then stopped, and the process exits.
-    """
-    logging.config.dictConfig(config)
-    listener = logging.handlers.QueueListener(q, MyHandler())
-    listener.start()
-    if os.name == 'posix':
-        # On POSIX, the setup logger will have been configured in the
-        # parent process, but should have been disabled following the
-        # dictConfig call.
-        # On Windows, since fork isn't used, the setup logger won't
-        # exist in the child, so it would be created and the message
-        # would appear - hence the "if posix" clause.
-        logger = logging.getLogger('setup')
-        logger.critical('Should not appear, because of disabled logger ...')
-    stop_event.wait()
-    listener.stop()
+# This is the listener process top-level loop: wait for logging events
+# (LogRecords)on the queue and handle them, quit when you get a None for a
+# LogRecord.
 
 
-def worker_process(config):
-    """
-    A number of these are spawned for the purpose of illustration. In
-    practice, they could be a heterogeneous bunch of processes rather than
-    ones which are identical to each other.
+def listener_process(queue, configurer):
+    configurer()
+    while True:
+        try:
+            record = queue.get()
+            if record is None:  # We send this as a sentinel to tell the listener to quit.
+                break
+            logger = logging.getLogger(record.name)
+            # No level or filter logic applied - just do it!
+            logger.handle(record)
+        except Exception:
+            import sys
+            import traceback
+            print('Whoops! Problem:', file=sys.stderr)
+            traceback.print_exc(file=sys.stderr)
 
-    This initialises logging according to the specified configuration,
-    and logs a hundred messages with random levels to randomly selected
-    loggers.
+# Arrays used for random selections in this demo
 
-    A small sleep is added to allow other processes a chance to run. This
-    is not strictly needed, but it mixes the output from the different
-    processes a bit more than if it's left out.
-    """
-    logging.config.dictConfig(config)
-    levels = [logging.DEBUG, logging.INFO, logging.WARNING, logging.ERROR,
-              logging.CRITICAL]
-    loggers = ['foo', 'foo.bar', 'foo.bar.baz',
-               'spam', 'spam.ham', 'spam.ham.eggs']
-    if os.name == 'posix':
-        # On POSIX, the setup logger will have been configured in the
-        # parent process, but should have been disabled following the
-        # dictConfig call.
-        # On Windows, since fork isn't used, the setup logger won't
-        # exist in the child, so it would be created and the message
-        # would appear - hence the "if posix" clause.
-        logger = logging.getLogger('setup')
-        logger.critical('Should not appear, because of disabled logger ...')
-    for i in range(100):
-        lvl = random.choice(levels)
-        logger = logging.getLogger(random.choice(loggers))
-        logger.log(lvl, 'Message no. %d', i)
-        time.sleep(0.01)
+
+LEVELS = [logging.DEBUG, logging.INFO, logging.WARNING,
+          logging.ERROR, logging.CRITICAL]
+
+LOGGERS = ['a.b.c', 'd.e.f']
+
+MESSAGES = [
+    'Random message #1',
+    'Random message #2',
+    'Random message #3',
+]
+
+# The worker configuration is done at the start of the worker process run.
+# Note that on Windows you can't rely on fork semantics, so each process
+# will run the logging configuration code when it starts.
+
+
+def worker_configurer(queue):
+    h = logging.handlers.QueueHandler(queue)  # Just the one handler needed
+    root = logging.getLogger()
+    root.addHandler(h)
+    # send all messages, for demo; no other level or filter logic applied.
+    root.setLevel(logging.DEBUG)
+
+# This is the worker process top-level loop, which just logs ten events with
+# random intervening delays before terminating.
+# The print messages are just so you know it's doing something!
+
+
+def worker_process(queue, configurer):
+    configurer(queue)
+    name = multiprocessing.current_process().name
+    print('Worker started: %s' % name)
+    for i in range(10):
+        time.sleep(random())
+        logger = logging.getLogger(choice(LOGGERS))
+        level = choice(LEVELS)
+        message = choice(MESSAGES)
+        logger.log(level, message)
+    print('Worker finished: %s' % name)
+
+# Here's where the demo gets orchestrated. Create the queue, create and start
+# the listener, create ten workers and start them, wait for them to finish,
+# then send a None to the queue to tell the listener to finish.
 
 
 def main():
-    q = Queue()
-    # The main process gets a simple configuration which prints to the console.
-    config_initial = {
-        'version': 1,
-        'formatters': {
-            'detailed': {
-                'class': 'logging.Formatter',
-                'format': '%(asctime)s %(name)-15s %(levelname)-8s %(processName)-10s %(message)s'
-            }
-        },
-        'handlers': {
-            'console': {
-                'class': 'logging.StreamHandler',
-                'level': 'INFO',
-            },
-        },
-        'root': {
-            'level': 'DEBUG',
-            'handlers': ['console']
-        },
-    }
-    # The worker process configuration is just a QueueHandler attached to the
-    # root logger, which allows all messages to be sent to the queue.
-    # We disable existing loggers to disable the "setup" logger used in the
-    # parent process. This is needed on POSIX because the logger will
-    # be there in the child following a fork().
-    config_worker = {
-        'version': 1,
-        'disable_existing_loggers': True,
-        'handlers': {
-            'queue': {
-                'class': 'logging.handlers.QueueHandler',
-                'queue': q,
-            },
-        },
-        'root': {
-            'level': 'DEBUG',
-            'handlers': ['queue']
-        },
-    }
-    # The listener process configuration shows that the full flexibility of
-    # logging configuration is available to dispatch events to handlers however
-    # you want.
-    # We disable existing loggers to disable the "setup" logger used in the
-    # parent process. This is needed on POSIX because the logger will
-    # be there in the child following a fork().
-    config_listener = {
-        'version': 1,
-        'disable_existing_loggers': True,
-        'formatters': {
-            'detailed': {
-                'class': 'logging.Formatter',
-                'format': '%(asctime)s %(name)-15s %(levelname)-8s %(processName)-10s %(message)s'
-            },
-            'simple': {
-                'class': 'logging.Formatter',
-                'format': '%(name)-15s %(levelname)-8s %(processName)-10s %(message)s'
-            }
-        },
-        'handlers': {
-            'console': {
-                'class': 'logging.StreamHandler',
-                'level': 'INFO',
-                'formatter': 'simple',
-            },
-            'file': {
-                'class': 'logging.FileHandler',
-                'filename': 'mplog.log',
-                'mode': 'w',
-                'formatter': 'detailed',
-            },
-            'foofile': {
-                'class': 'logging.FileHandler',
-                'filename': 'mplog-foo.log',
-                'mode': 'w',
-                'formatter': 'detailed',
-            },
-            'errors': {
-                'class': 'logging.FileHandler',
-                'filename': 'mplog-errors.log',
-                'mode': 'w',
-                'level': 'ERROR',
-                'formatter': 'detailed',
-            },
-        },
-        'loggers': {
-            'foo': {
-                'handlers': ['foofile']
-            }
-        },
-        'root': {
-            'level': 'DEBUG',
-            'handlers': ['console', 'file', 'errors']
-        },
-    }
-    # Log some initial events, just to show that logging in the parent works
-    # normally.
-    logging.config.dictConfig(config_initial)
-    logger = logging.getLogger('setup')
-    logger.info('About to create workers ...')
+    queue = multiprocessing.Queue(-1)
+    listener = multiprocessing.Process(target=listener_process,
+                                       args=(queue, listener_configurer))
+    listener.start()
+    # listener = listener_process(queue, listener_configurer)
     workers = []
-    for i in range(5):
-        wp = Process(target=worker_process, name='worker %d' % (i + 1),
-                     args=(config_worker,))
-        workers.append(wp)
-        wp.start()
-        logger.info('Started worker: %s', wp.name)
-    logger.info('About to create listener ...')
-    stop_event = Event()
-    lp = Process(target=listener_process, name='listener',
-                 args=(q, stop_event, config_listener))
-    lp.start()
-    logger.info('Started listener')
-    # We now hang around for the workers to finish their work.
-    for wp in workers:
-        wp.join()
-    # Workers all done, listening can now stop.
-    # Logging in the parent still works normally.
-    logger.info('Telling listener to stop ...')
-    stop_event.set()
-    lp.join()
-    logger.info('All done.')
+    for i in range(3):
+        worker = multiprocessing.Process(target=worker_process,
+                                         args=(queue, worker_configurer))
+        workers.append(worker)
+        worker.start()
+    for w in workers:
+        w.join()
+    queue.put_nowait(None)
+    listener.join()
 
 
 if __name__ == '__main__':

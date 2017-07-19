@@ -3,6 +3,8 @@ Created on Dec 25, 2016
 
 @author: jack
 '''
+import zerorpc
+
 
 class Cooler(object):
     """ Various convenience methods to make things cooler. """
@@ -24,8 +26,6 @@ class Cooler(object):
 
 
 if __name__ == '__main__':
-    import zerorpc
-
     s = zerorpc.Server(Cooler())
     s.bind("tcp://0.0.0.0:4242")
     s.run()
