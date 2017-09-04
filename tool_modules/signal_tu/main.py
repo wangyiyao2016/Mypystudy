@@ -13,6 +13,7 @@ PID = os.getpid()
 
 
 def alarm_received(n, stack):
+    print("alarm_received called")
     return
 
 
@@ -24,6 +25,13 @@ def test():
     )
     for s, name in sorted(signals_to_names.items()):
         handler = signal.getsignal(s)
+        if handler is signal.SIG_DFL:
+            handler = 'SIG_DFL'
+        elif handler is signal.SIG_IGN:
+            handler = 'SIG_IGN'
+        else:
+            print()
+        print('%-10s (%2d): ' % (name, s), handler)
 
 
 def receive_signal(signum, stack):
@@ -43,5 +51,6 @@ def main():
 
 if __name__ == '__main__':
     print(PID)
-    main()
+    test()
+    # main()
     pass
