@@ -5,6 +5,7 @@ Created on Jan 30, 2017
 
 @author: Jack
 '''
+from itertools import zip_longest
 import functools
 
 
@@ -18,6 +19,8 @@ rv = any(l)
 
 def tesfuc():
     pass
+
+
 c = "ddddd21123"
 c = "我身边有个  后天结巴的同学以前都不敢和他多说话"
 ac = ascii(c)
@@ -50,6 +53,7 @@ def generate_ints(N):
     for i in range(N):
         yield i
 
+
 gen = generate_ints(3)
 a, b, c = generate_ints(3)
 
@@ -76,6 +80,7 @@ def counter(maximum):
         else:
             i += 1
 
+
 it = counter(5)
 
 
@@ -83,6 +88,14 @@ def log(message, subsystem):
     """Write the contents of 'message' to the specified subsystem."""
     print('%s: %s' % (subsystem, message))
 
+
+x = [1, 2, 3]
+y = [5, 6, 7]
+
+xy = zip_longest(x, y)
 if __name__ == '__main__':
+    for i in xy:
+        print(i)
+    print(xy)
     server_log = functools.partial(log, subsystem='server')
     server_log('Unable to open socket')
