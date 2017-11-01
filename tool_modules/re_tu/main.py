@@ -28,6 +28,14 @@ def main():
     print(result_sub)
 
 
+line = 'asdf fjdk; afed, fjek,asdf, foo'
+
+fields = re.split(r'([;,\s])\s*', line)
+values = fields[::2]
+delimiters = fields[1::2] + ['']
+
+test = ''.join(v + d for v, d in zip(values, delimiters))
+
 if __name__ == '__main__':
     main()
     pass

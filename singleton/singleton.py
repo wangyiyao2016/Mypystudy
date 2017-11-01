@@ -63,3 +63,31 @@ print(s0 is s1)
 print(s0 is s2)
 print(s1 is s2)
 print(isinstance(s0, MySingletonClass))
+
+
+class Singleton2(type):
+
+    def __init__(self, *args, **kwargs):
+        self.__instance = None
+        super().__init__(*args, **kwargs)
+
+    def __call__(self, *args, **kwargs):
+        if self.__instance is None:
+            self.__instance = super().__call__(*args, **kwargs)
+            return self.__instance
+        else:
+            return self.__instance
+
+
+class Spam(metaclass=Singleton2):
+    """
+    使用元类控制单例的创建
+    """
+
+    def __init__(self):
+        print('Creating Spam')
+
+
+a = Spam()
+b = Spam()
+print(a is b)
