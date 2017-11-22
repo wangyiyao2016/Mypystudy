@@ -3,11 +3,12 @@
 '''
 Created on Mar 26, 2017
 
-@author: Jack
+@copied_by: Jack
 '''
 import random
 import threading
 import time
+import logging
 
 
 class Producer(threading.Thread):
@@ -75,6 +76,29 @@ class Consumer(threading.Thread):
         # time.sleep(1)
 
 
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - (%(threadName) -2s %(message)s)'
+)
+
+
+def consumer(cond):
+    #     t = threading.current_thread()
+    logging.debug('Starting consumer thread')
+    with cond:
+        logging.debug('consumer begin to wait')
+        cond.wait()
+        logging.debug('res available to consumer')
+
+
+def producer(cond):
+    logging.debug('Starting producer thread')
+    with cond:
+        logging.debug('Make res available to consumers')
+        cond.notify_all()
+        logging.debug('notify_all done')
+
+
 def main():
     integers = []
     condition = threading.Condition()
@@ -86,6 +110,18 @@ def main():
     t2.join()
 
 
+def test():
+    condition = threading.Condition()
+    c1 = threading.Thread(name='c1', target=consumer, args=(condition,))
+    c2 = threading.Thread(name='c2', target=consumer, args=(condition,))
+    p = threading.Thread(name='p', target=producer, args=(condition,))
+    c1.start()
+    time.sleep(2)
+    c2.start()
+    time.sleep(2)
+    p.start()
+
+
 if __name__ == '__main__':
-    main()
+    test()
     pass
