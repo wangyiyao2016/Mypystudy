@@ -95,8 +95,10 @@ def producer(cond):
     logging.debug('Starting producer thread')
     with cond:
         logging.debug('Make res available to consumers')
-        cond.notify_all()
-        logging.debug('notify_all done')
+#         cond.notify_all()
+#         logging.debug('notify_all done')
+        cond.notify(n=1)
+        logging.debug('notify one thread')
 
 
 def main():
@@ -114,12 +116,15 @@ def test():
     condition = threading.Condition()
     c1 = threading.Thread(name='c1', target=consumer, args=(condition,))
     c2 = threading.Thread(name='c2', target=consumer, args=(condition,))
-    p = threading.Thread(name='p', target=producer, args=(condition,))
+    p1 = threading.Thread(name='p1', target=producer, args=(condition,))
+    p2 = threading.Thread(name='p2', target=producer, args=(condition,))
     c1.start()
     time.sleep(2)
     c2.start()
     time.sleep(2)
-    p.start()
+    p1.start()
+    time.sleep(2)
+    p2.start()
 
 
 if __name__ == '__main__':
