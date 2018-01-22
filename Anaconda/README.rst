@@ -16,7 +16,9 @@ Fill in the following stuff in `Spark 2 Client Advanced Configuration Snippet (S
 	export PYSPARK_PYTHON=/var/lib/hadoop-hdfs/anaconda3/envs/JackEnv/bin/python
 	fi
 
-From https://www.cloudera.com/documentation/enterprise/5-11-x/topics/spark_python.html#spark_python__section_ark_lkn_25
+From this doc_.
+
+.. _doc: https://www.cloudera.com/documentation/enterprise/5-11-x/topics/spark_python.html#spark_python__section_ark_lkn_25
 
 Conda::
 
