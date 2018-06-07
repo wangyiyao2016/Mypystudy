@@ -5,8 +5,9 @@ Created on Oct 9, 2017
 
 @author: Jack
 '''
-from multiprocessing import Pool, TimeoutError
 import concurrent.futures
+from multiprocessing import Pool, TimeoutError
+import time
 
 
 def gen_data(path):
@@ -22,9 +23,10 @@ def gen_data(path):
 
 
 def test(v):
-    print("----", v)
-#     raise TypeError
-    return v
+    if v % 3 == 0:
+        time.sleep(3)
+    #     raise TypeError
+    return ("----", v)
 
 
 def _main():
@@ -38,15 +40,25 @@ def _main():
     print(f.closed)
 
 
+def callback(a):
+    print("callback called", a)
+    return "not callable"
+
+
+def error_callback(a):
+    print("error_callback called")
+
+
 def main():
-    with Pool(processes=4) as pool:
-        _ = list(range(100))
-        results = pool.apply_async(test, _,)
-        print(results)
-#         for i in results:
-#             print(i)
-#             pass
-#             print(i)
+    processes = None
+    with Pool(processes=processes, maxtasksperchild=20) as pool:
+        ids = range(1000)
+        for i in ids:
+            res = pool.apply_async(
+                func=test, args=(i,), callback=callback,
+                error_callback=error_callback
+            )
+            print(res.get(timeout=10))
 
 
 if __name__ == '__main__':
